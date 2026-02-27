@@ -158,7 +158,7 @@ export const BlogPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card hover className="cursor-pointer" onClick={() => alert(`Opening article: ${post.title}`)}>
+                  <Card hover className="cursor-pointer" onClick={() => window.location.href = `/blog/${post.id}`}>
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">

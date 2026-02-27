@@ -25,9 +25,17 @@ export const BookDetailPage = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [offerAmount, setOfferAmount] = useState('');
   const [showOfferSuccess, setShowOfferSuccess] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
 
   useEffect(() => {
     fetchBookDetails();
+    // Check if book is already in wishlist
+    const wishlistKey = 'bookWishlist';
+    const existingWishlist = JSON.parse(localStorage.getItem(wishlistKey) || '[]');
+    const isInWishlist = existingWishlist.some(item => item.id === id);
+    setIsWishlisted(isInWishlist);
   }, [id]);
 
   const fetchBookDetails = async () => {
@@ -46,7 +54,111 @@ export const BookDetailPage = () => {
   };
 
   const handleBuyNow = () => {
-    alert('Redirecting to payment page...');
+    setShowCheckoutModal(true);
+  };
+
+  const handleConfirmOrder = async () => {
+    if (!deliveryAddress.trim()) {
+      alert('Please enter delivery address');
+      return;
+    }
+    
+    if (paymentMethod === 'online') {
+      try {
+        // Create order from backend
+        const response = await fetch('http://localhost:5001/api/payment/create-order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            amount: book.price,
+            bookTitle: book.title
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          const options = {
+            key: 'rzp_test_SJTNOuxzzNduur', // Your actual key from .env
+            amount: data.order.amount,
+            currency: data.order.currency,
+            name: 'SmartBook Sharing',
+            description: book.title,
+            order_id: data.order.id,
+            handler: async function (response) {
+              // Verify payment
+              const verifyResponse = await fetch('http://localhost:5001/api/payment/verify', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature
+                })
+              });
+              
+              const verifyData = await verifyResponse.json();
+              
+              if (verifyData.success) {
+                saveOrder();
+                alert('Payment successful!');
+              } else {
+                alert('Payment verification failed!');
+              }
+            },
+            prefill: {
+              name: 'User Name',
+              email: 'user@example.com',
+              contact: '9999999999'
+            },
+            theme: {
+              color: '#3B82F6'
+            }
+          };
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        } else {
+          alert('Failed to create order: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Payment error:', error);
+        alert('Payment failed. Please try again.');
+      }
+    } else {
+      saveOrder();
+    }
+  };
+
+  const saveOrder = () => {
+    const ordersKey = 'myOrders';
+    const existingOrders = JSON.parse(localStorage.getItem(ordersKey) || '[]');
+    
+    let orderImage = 'https://via.placeholder.com/300x400?text=Book';
+    if (bookImages[0] && !bookImages[0].includes('localhost')) {
+      orderImage = bookImages[0];
+    }
+    
+    const newOrder = {
+      id: Date.now(),
+      title: book.title,
+      seller: book.seller?.name || 'Seller',
+      amount: book.price,
+      status: 'shipped',
+      orderDate: 'Just now',
+      image: orderImage,
+      address: deliveryAddress,
+      paymentMethod: paymentMethod
+    };
+    existingOrders.unshift(newOrder);
+    localStorage.setItem(ordersKey, JSON.stringify(existingOrders));
+    
+    alert(`Order placed successfully!\nBook: ${book.title}\nAmount: ₹${book.price}`);
+    setShowCheckoutModal(false);
+    navigate('/student/dashboard');
   };
 
   const handleSendOffer = () => {
@@ -64,9 +176,31 @@ export const BookDetailPage = () => {
   };
 
   const handleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-    const message = !isWishlisted ? 'Added to wishlist!' : 'Removed from wishlist!';
-    alert(message);
+    const wishlistKey = 'bookWishlist';
+    const existingWishlist = JSON.parse(localStorage.getItem(wishlistKey) || '[]');
+    
+    if (!isWishlisted) {
+      // Add to wishlist
+      const wishlistItem = {
+        id: book._id,
+        title: book.title,
+        author: book.author,
+        currentPrice: book.price,
+        targetPrice: Math.floor(book.price * 0.9),
+        priceAlert: false,
+        image: bookImages[0]
+      };
+      existingWishlist.push(wishlistItem);
+      localStorage.setItem(wishlistKey, JSON.stringify(existingWishlist));
+      setIsWishlisted(true);
+      alert('Added to wishlist!');
+    } else {
+      // Remove from wishlist
+      const updatedWishlist = existingWishlist.filter(item => item.id !== book._id);
+      localStorage.setItem(wishlistKey, JSON.stringify(updatedWishlist));
+      setIsWishlisted(false);
+      alert('Removed from wishlist!');
+    }
   };
 
   const reviews = [];
@@ -252,6 +386,67 @@ export const BookDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Checkout Modal */}
+      {showCheckoutModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Checkout</h3>
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded">
+                <p className="font-semibold">{book.title}</p>
+                <p className="text-sm text-gray-600">by {book.author}</p>
+                <p className="text-lg font-bold text-primary-600 mt-2">₹{book.price}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Delivery Address</label>
+                <textarea
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  placeholder="Enter your complete address"
+                  className="w-full p-2 border rounded"
+                  rows="3"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Payment Method</label>
+                <div className="space-y-2">
+                  <label className="flex items-center p-3 border rounded cursor-pointer">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="cod"
+                      checked={paymentMethod === 'cod'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="mr-2"
+                    />
+                    <span>Cash on Delivery</span>
+                  </label>
+                  <label className="flex items-center p-3 border rounded cursor-pointer">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="online"
+                      checked={paymentMethod === 'online'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="mr-2"
+                    />
+                    <span>Online Payment</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex space-x-2">
+                <Button onClick={() => setShowCheckoutModal(false)} variant="outline" className="flex-1">Cancel</Button>
+                <Button onClick={handleConfirmOrder} className="flex-1">Confirm Order</Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

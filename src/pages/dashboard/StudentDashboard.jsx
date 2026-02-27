@@ -7,13 +7,15 @@ import {
   HeartIcon,
   ShoppingBagIcon,
   ClockIcon,
-  PlusIcon
+  PlusIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
+import { ChatInterface } from '../../components/chat/ChatInterface';
 
 export const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -22,12 +24,36 @@ export const StudentDashboard = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showTrackModal, setShowTrackModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [rating, setRating] = useState(0);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [orderFilter, setOrderFilter] = useState('all');
+  const [wishlist, setWishlist] = useState([]);
+  const [myOrders, setMyOrders] = useState([]);
 
   useEffect(() => {
     loadMyListings();
+    loadWishlist();
+    loadOrders();
   }, []);
+
+  const loadWishlist = () => {
+    const wishlistKey = 'bookWishlist';
+    const savedWishlist = JSON.parse(localStorage.getItem(wishlistKey) || '[]');
+    setWishlist(savedWishlist);
+  };
+
+  const loadOrders = () => {
+    const ordersKey = 'myOrders';
+    const savedOrders = JSON.parse(localStorage.getItem(ordersKey) || '[]');
+    setMyOrders(savedOrders);
+  };
 
   const loadMyListings = async () => {
     try {
@@ -43,8 +69,8 @@ export const StudentDashboard = () => {
   const stats = [
     { label: 'Books Sold', value: '12', icon: BookOpenIcon, color: 'text-green-600' },
     { label: 'Total Earnings', value: '₹8,450', icon: CurrencyRupeeIcon, color: 'text-blue-600' },
-    { label: 'Active Listings', value: '5', icon: EyeIcon, color: 'text-purple-600' },
-    { label: 'Wishlist Items', value: '8', icon: HeartIcon, color: 'text-red-600' }
+    { label: 'Active Listings', value: myListings.length.toString(), icon: EyeIcon, color: 'text-purple-600' },
+    { label: 'Wishlist Items', value: wishlist.length.toString(), icon: HeartIcon, color: 'text-red-600' }
   ];
 
   const recentListings = [
@@ -70,7 +96,7 @@ export const StudentDashboard = () => {
     }
   ];
 
-  const recentOrders = [
+  const recentOrders = myOrders.length > 0 ? myOrders : [
     {
       id: 1,
       title: 'Mathematics Class 12',
@@ -91,33 +117,71 @@ export const StudentDashboard = () => {
     }
   ];
 
-  const wishlistItems = [
-    {
-      id: 1,
-      title: 'Biology NEET Preparation',
-      author: 'Trueman',
-      currentPrice: 420,
-      targetPrice: 350,
-      priceAlert: true,
-      image: 'https://picsum.photos/300/400?random=9'
-    },
-    {
-      id: 2,
-      title: 'Economics Principles',
-      author: 'Sandeep Garg',
-      currentPrice: 350,
-      targetPrice: 300,
-      priceAlert: false,
-      image: 'https://picsum.photos/300/400?random=13'
+  const wishlistItems = wishlist;
+
+  const removeFromWishlist = (itemId) => {
+    if (confirm('Remove this book from wishlist?')) {
+      const wishlistKey = 'bookWishlist';
+      const updatedWishlist = wishlist.filter(item => item.id !== itemId);
+      setWishlist(updatedWishlist);
+      localStorage.setItem(wishlistKey, JSON.stringify(updatedWishlist));
     }
-  ];
+  };
+
+  const buyNow = (item) => {
+    navigate(`/book/${item.id}`);
+  };
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'listings', label: 'My Listings' },
     { id: 'orders', label: 'My Orders' },
+    { id: 'requests', label: 'Book Requests' },
     { id: 'wishlist', label: 'Wishlist' }
   ];
+
+  const filteredOrders = orderFilter === 'all' 
+    ? recentOrders 
+    : recentOrders.filter(order => order.status === orderFilter);
+
+  const bookRequests = [
+    {
+      id: 1,
+      title: 'Advanced Data Structures',
+      author: 'Peter Brass',
+      requestedBy: 'Central Library',
+      urgency: 'high',
+      budget: '₹800',
+      description: 'Need for Computer Science department',
+      date: '2 days ago',
+      status: 'open'
+    },
+    {
+      id: 2,
+      title: 'Machine Learning Yearning',
+      author: 'Andrew Ng',
+      requestedBy: 'City Library',
+      urgency: 'medium',
+      budget: '₹600',
+      description: 'Popular demand from students',
+      date: '1 week ago',
+      status: 'fulfilled'
+    }
+  ];
+
+  const exportOrders = () => {
+    const csv = ['Title,Seller,Amount,Status,Date\n'];
+    recentOrders.forEach(order => {
+      csv.push(`"${order.title}","${order.seller}",${order.amount},${order.status},"${order.orderDate}"\n`);
+    });
+    const blob = new Blob(csv, { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'my-orders.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary-50 to-primary-50 py-8">
@@ -188,7 +252,7 @@ export const StudentDashboard = () => {
                   {myListings.slice(0, 2).map((listing) => (
                     <div key={listing._id} className="flex items-center space-x-3 p-3 bg-secondary-50 rounded-lg shadow-soft">
                       <div className="w-12 h-16 bg-secondary-200 rounded overflow-hidden flex-shrink-0">
-                        <img src={listing.images?.[0] || 'https://via.placeholder.com/300x400'} alt={listing.title} className="w-full h-full object-cover" />
+                        <img src={listing.images?.[0]?.url ? `http://localhost:5001${listing.images[0].url}` : 'https://via.placeholder.com/300x400'} alt={listing.title} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1">
                         <h4 className="font-semibold text-secondary-900">{listing.title}</h4>
@@ -216,8 +280,12 @@ export const StudentDashboard = () => {
                 <div className="space-y-3">
                   {recentOrders.map((order) => (
                     <div key={order.id} className="flex items-center space-x-3 p-3 bg-secondary-50 rounded-lg shadow-soft">
-                      <div className="w-12 h-16 bg-secondary-200 rounded overflow-hidden flex-shrink-0">
-                        <img src={order.image} alt={order.title} className="w-full h-full object-cover" />
+                      <div className="w-12 h-16 bg-gradient-to-br from-primary-400 to-primary-600 rounded overflow-hidden flex-shrink-0 flex items-center justify-center text-white font-bold">
+                        {order.image && order.image.startsWith('http') && !order.image.includes('placeholder') ? (
+                          <img src={order.image} alt={order.title} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = order.title.charAt(0).toUpperCase(); }} />
+                        ) : (
+                          order.title.charAt(0).toUpperCase()
+                        )}
                       </div>
                       <div className="flex-1">
                         <h4 className="font-semibold text-secondary-900">{order.title}</h4>
@@ -249,7 +317,7 @@ export const StudentDashboard = () => {
                 {myListings.map((listing) => (
                   <div key={listing._id} className="flex items-center space-x-4 p-4 border border-secondary-200 rounded-xl shadow-soft hover:shadow-medium transition-all duration-200">
                     <div className="w-16 h-20 bg-secondary-200 rounded overflow-hidden flex-shrink-0">
-                      <img src={listing.images?.[0] || 'https://via.placeholder.com/300x400'} alt={listing.title} className="w-full h-full object-cover" />
+                      <img src={listing.images?.[0]?.url ? `http://localhost:5001${listing.images[0].url}` : 'https://via.placeholder.com/300x400'} alt={listing.title} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1">
                       <h4 className="font-semibold text-secondary-900">{listing.title}</h4>
@@ -283,15 +351,19 @@ export const StudentDashboard = () => {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-display font-bold text-secondary-900">My Orders</h3>
                 <div className="flex space-x-2">
-                  <Button onClick={() => alert('Orders filtered successfully')} variant="outline" size="sm">Filter</Button>
-                  <Button onClick={() => alert('Orders exported successfully')} variant="outline" size="sm">Export</Button>
+                  <Button onClick={() => setShowFilterModal(true)} variant="outline" size="sm">Filter</Button>
+                  <Button onClick={exportOrders} variant="outline" size="sm">Export</Button>
                 </div>
               </div>
               <div className="space-y-4">
-                {recentOrders.map((order) => (
+                {filteredOrders.map((order) => (
                   <div key={order.id} className="flex items-center space-x-4 p-4 border border-secondary-200 rounded-xl shadow-soft hover:shadow-medium transition-all duration-200">
-                    <div className="w-16 h-20 bg-secondary-200 rounded overflow-hidden flex-shrink-0">
-                      <img src={order.image} alt={order.title} className="w-full h-full object-cover" />
+                    <div className="w-16 h-20 bg-gradient-to-br from-primary-400 to-primary-600 rounded overflow-hidden flex-shrink-0 flex items-center justify-center text-white font-bold text-xl">
+                      {order.image && order.image.startsWith('http') && !order.image.includes('placeholder') ? (
+                        <img src={order.image} alt={order.title} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = order.title.charAt(0).toUpperCase(); }} />
+                      ) : (
+                        order.title.charAt(0).toUpperCase()
+                      )}
                     </div>
                     <div className="flex-1">
                       <h4 className="font-semibold text-secondary-900">{order.title}</h4>
@@ -306,7 +378,7 @@ export const StudentDashboard = () => {
                     </div>
                     <div className="flex space-x-2">
                       <Button onClick={() => { setSelectedItem(order); setShowTrackModal(true); }} variant="outline" size="sm">Track</Button>
-                      <Button onClick={() => alert(`Opening chat with ${order.seller}...`)} variant="outline" size="sm">Chat</Button>
+                      <Button onClick={() => { setSelectedItem(order); setChatMessages([]); setShowChatModal(true); }} variant="outline" size="sm">Chat</Button>
                       {order.status === 'delivered' && (
                         <Button onClick={() => { setSelectedItem(order); setRating(0); setShowReviewModal(true); }} size="sm">Review</Button>
                       )}
@@ -317,39 +389,222 @@ export const StudentDashboard = () => {
             </Card>
           )}
 
+          {activeTab === 'requests' && (
+            <Card>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-display font-bold text-secondary-900">Book Requests</h3>
+                <p className="text-sm text-secondary-600">Help fulfill library requests and earn money</p>
+              </div>
+              <div className="space-y-4">
+                {bookRequests.map((request) => (
+                  <div key={request.id} className="border border-secondary-200 rounded-xl p-4 hover:shadow-medium transition-all duration-200">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="font-semibold text-secondary-900">{request.title}</h4>
+                          <Badge variant={request.urgency === 'high' ? 'danger' : request.urgency === 'medium' ? 'warning' : 'default'}>
+                            {request.urgency} priority
+                          </Badge>
+                          <Badge variant={request.status === 'fulfilled' ? 'success' : 'default'}>
+                            {request.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-secondary-600 mb-1">Author: {request.author}</p>
+                        <p className="text-sm text-secondary-600 mb-1">Requested by: {request.requestedBy}</p>
+                        <p className="text-sm text-secondary-600 mb-2">{request.description}</p>
+                        <div className="flex items-center space-x-4 text-sm">
+                          <span className="text-primary-600 font-medium">Budget: {request.budget}</span>
+                          <span className="text-secondary-500">{request.date}</span>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        {request.status === 'open' && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedRequest(request);
+                                setShowContactModal(true);
+                              }}
+                            >
+                              Contact Library
+                            </Button>
+                            <Button 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedRequest(request);
+                                setShowOfferModal(true);
+                              }}
+                            >
+                              I Have This Book
+                            </Button>
+                          </>
+                        )}
+                        {request.status === 'fulfilled' && (
+                          <Button variant="outline" size="sm" disabled>Already Fulfilled</Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-6 bg-primary-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-primary-800 mb-2">💰 Earn Money by Fulfilling Requests</h4>
+                <p className="text-sm text-primary-700">
+                  Libraries post book requests with their budget. If you have the requested book, 
+                  contact them to make a sale. It's a great way to sell books that are in demand!
+                </p>
+              </div>
+            </Card>
+          )}
+
           {activeTab === 'wishlist' && (
             <Card>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-display font-bold text-secondary-900">My Wishlist</h3>
                 <p className="text-sm text-secondary-600">{wishlistItems.length} items</p>
               </div>
-              <div className="space-y-4">
-                {wishlistItems.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4 p-4 border border-secondary-200 rounded-xl shadow-soft hover:shadow-medium transition-all duration-200">
-                    <div className="w-16 h-20 bg-secondary-200 rounded overflow-hidden flex-shrink-0">
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-secondary-900">{item.title}</h4>
-                      <p className="text-sm text-secondary-600 mb-2">{item.author}</p>
-                      <div className="flex items-center space-x-4 text-sm">
-                        <span className="text-secondary-600">Current: ₹{item.currentPrice}</span>
-                        <span className="text-primary-600">Target: ₹{item.targetPrice}</span>
-                        {item.priceAlert && (
-                          <Badge variant="success" size="sm">Price Alert On</Badge>
-                        )}
+              {wishlistItems.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 mb-2">Your wishlist is empty</p>
+                  <p className="text-sm text-gray-400 mb-4">Browse books and add them to your wishlist</p>
+                  <Button onClick={() => navigate('/search')}>Browse Books</Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {wishlistItems.map((item) => (
+                    <div key={item.id} className="flex items-center space-x-4 p-4 border border-secondary-200 rounded-xl shadow-soft hover:shadow-medium transition-all duration-200">
+                      <div className="w-16 h-20 bg-secondary-200 rounded overflow-hidden flex-shrink-0">
+                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-secondary-900">{item.title}</h4>
+                        <p className="text-sm text-secondary-600 mb-2">{item.author}</p>
+                        <div className="flex items-center space-x-4 text-sm">
+                          <span className="text-secondary-600">Current: ₹{item.currentPrice}</span>
+                          <span className="text-primary-600">Target: ₹{item.targetPrice}</span>
+                          {item.priceAlert && (
+                            <Badge variant="success" size="sm">Price Alert On</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button onClick={() => removeFromWishlist(item.id)} variant="outline" size="sm">Remove</Button>
+                        <Button onClick={() => buyNow(item)} size="sm">Buy Now</Button>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button onClick={() => confirm('Remove from wishlist?') && alert('Removed from wishlist!')} variant="outline" size="sm">Remove</Button>
-                      <Button onClick={() => alert(`Redirecting to buy ${item.title}...`)} size="sm">Buy Now</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Card>
           )}
         </div>
+
+        {/* Contact Library Modal */}
+        {showContactModal && selectedRequest && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="max-w-lg w-full mx-4">
+              <h3 className="text-xl font-bold mb-4">Contact {selectedRequest.requestedBy}</h3>
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <h4 className="font-semibold">{selectedRequest.title}</h4>
+                <p className="text-sm text-gray-600">Author: {selectedRequest.author}</p>
+                <p className="text-sm text-gray-600">Budget: {selectedRequest.budget}</p>
+              </div>
+              <form className="space-y-4" onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const message = formData.get('message');
+                const phone = formData.get('phone');
+                
+                // Save message to localStorage for library to see
+                const messages = JSON.parse(localStorage.getItem('libraryMessages') || '[]');
+                const newMessage = {
+                  id: Date.now(),
+                  type: 'inquiry',
+                  requestId: selectedRequest.id,
+                  bookTitle: selectedRequest.title,
+                  studentName: 'Current Student',
+                  message: message,
+                  phone: phone,
+                  timestamp: new Date().toISOString(),
+                  read: false
+                };
+                messages.push(newMessage);
+                localStorage.setItem('libraryMessages', JSON.stringify(messages));
+                
+                alert(`Message sent to ${selectedRequest.requestedBy}!`);
+                setShowContactModal(false);
+              }}>
+                <textarea 
+                  name="message"
+                  placeholder="Hi, I saw your request for this book. I might be able to help you."
+                  className="w-full p-3 border rounded-lg h-24"
+                  required
+                ></textarea>
+                <input name="phone" type="tel" placeholder="Your phone number" className="w-full p-3 border rounded-lg" required />
+                <div className="flex space-x-3">
+                  <Button type="button" onClick={() => setShowContactModal(false)} variant="outline" className="flex-1">Cancel</Button>
+                  <Button type="submit" className="flex-1">Send Message</Button>
+                </div>
+              </form>
+            </Card>
+          </div>
+        )}
+
+        {/* I Have This Book Modal */}
+        {showOfferModal && selectedRequest && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="max-w-lg w-full mx-4">
+              <h3 className="text-xl font-bold mb-4">Offer Your Book</h3>
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <h4 className="font-semibold">{selectedRequest.title}</h4>
+                <p className="text-sm text-primary-600">Budget: {selectedRequest.budget}</p>
+              </div>
+              <form className="space-y-4" onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const price = formData.get('price');
+                const condition = formData.get('condition');
+                const phone = formData.get('phone');
+                
+                // Save offer to localStorage for library to see
+                const messages = JSON.parse(localStorage.getItem('libraryMessages') || '[]');
+                const newOffer = {
+                  id: Date.now(),
+                  type: 'offer',
+                  requestId: selectedRequest.id,
+                  bookTitle: selectedRequest.title,
+                  studentName: 'Current Student',
+                  price: price,
+                  condition: condition,
+                  phone: phone,
+                  timestamp: new Date().toISOString(),
+                  read: false
+                };
+                messages.push(newOffer);
+                localStorage.setItem('libraryMessages', JSON.stringify(messages));
+                
+                alert('Offer submitted! Library will contact you.');
+                setShowOfferModal(false);
+              }}>
+                <input name="price" type="number" placeholder="Your selling price" className="w-full p-3 border rounded-lg" required />
+                <select name="condition" className="w-full p-3 border rounded-lg" required>
+                  <option value="">Book condition</option>
+                  <option value="Like New">Like New</option>
+                  <option value="Good">Good</option>
+                  <option value="Fair">Fair</option>
+                </select>
+                <input name="phone" type="tel" placeholder="Your contact number" className="w-full p-3 border rounded-lg" required />
+                <div className="flex space-x-3">
+                  <Button type="button" onClick={() => setShowOfferModal(false)} variant="outline" className="flex-1">Cancel</Button>
+                  <Button type="submit" className="flex-1">Submit Offer</Button>
+                </div>
+              </form>
+            </Card>
+          </div>
+        )}
 
         {/* Edit Listing Modal */}
         {showEditModal && selectedItem && (
@@ -396,6 +651,62 @@ export const StudentDashboard = () => {
                 </div>
                 <Button onClick={() => setShowTrackModal(false)} className="w-full">Close</Button>
               </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Chat Modal */}
+        {showChatModal && selectedItem && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-2xl h-[600px] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="text-xl font-bold">Chat with {selectedItem.seller}</h3>
+                <button onClick={() => setShowChatModal(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <ChatInterface
+                  messages={chatMessages}
+                  onSendMessage={(content, type) => {
+                    const newMsg = {
+                      id: Date.now(),
+                      senderId: 'currentUser',
+                      content,
+                      type,
+                      timestamp: new Date().toISOString()
+                    };
+                    setChatMessages([...chatMessages, newMsg]);
+                  }}
+                  currentUserId="currentUser"
+                  recipientName={selectedItem.seller}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Filter Modal */}
+        {showFilterModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="max-w-sm w-full mx-4">
+              <h3 className="text-xl font-bold mb-4">Filter Orders</h3>
+              <div className="space-y-3">
+                {['all', 'delivered', 'shipped'].map(status => (
+                  <button
+                    key={status}
+                    onClick={() => { setOrderFilter(status); setShowFilterModal(false); }}
+                    className={`w-full p-3 text-left rounded-lg border ${
+                      orderFilter === status 
+                        ? 'border-primary-500 bg-primary-50 text-primary-700' 
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    {status === 'all' ? 'All Orders' : status.charAt(0).toUpperCase() + status.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <Button onClick={() => setShowFilterModal(false)} variant="outline" className="w-full mt-4">Close</Button>
             </Card>
           </div>
         )}

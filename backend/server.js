@@ -16,7 +16,9 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(compression());
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3002'],
@@ -51,7 +53,8 @@ app.get('/api/test', (req, res) => {
     message: 'Frontend-Backend connection successful!',
     timestamp: new Date().toISOString(),
     server: 'BookShare Backend',
-    version: '1.0.0'
+    version: '1.0.0',
+    razorpay_configured: !!process.env.RAZORPAY_KEY_ID
   });
 });
 
@@ -62,6 +65,7 @@ app.use('/api/listings', require('./routes/listingRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/blogs', require('./routes/blogRoutes'));
 app.use('/api/notes', require('./routes/notesRoutes'));
+app.use('/api/payment', require('./routes/paymentRoutes'));
 app.use('/api/wishlist', require('./routes/wishlistRoutes'));
 
 // Serve uploaded files

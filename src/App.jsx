@@ -13,12 +13,19 @@ import { SellPage } from './pages/books/SellPage';
 import { NotesPage } from './pages/notes/NotesPage';
 import { UploadNotesPage } from './pages/notes/UploadNotesPage';
 import { BlogPage } from './pages/blog/BlogPage';
+import { FormPage } from './pages/blog/FormPage';
 import { KYCUploadPage } from './pages/auth/KYCUploadPage';
 import { BookDetailPage } from './pages/books/BookDetailPage';
 import { StudentDashboard } from './pages/dashboard/StudentDashboard';
 import { LibraryDashboard } from './pages/dashboard/LibraryDashboard';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { ChatPage } from './pages/chat/ChatPage';
+import { HelpPage } from './pages/support/HelpPage';
+import { ContactPage } from './pages/support/ContactPage';
+import { SafetyPage } from './pages/support/SafetyPage';
+import { DisputePage } from './pages/support/DisputePage';
+import { TermsOfService } from './pages/legal/TermsOfService';
+import { PrivacyPolicy } from './pages/legal/PrivacyPolicy';
 
 function AppContent() {
   const { user } = useAuth();
@@ -43,12 +50,19 @@ function AppContent() {
             <Route path="/notes" element={<NotesPage />} />
             <Route path="/notes/upload" element={<UploadNotesPage />} />
             <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:id" element={<FormPage />} />
             <Route path="/kyc-upload" element={<KYCUploadPage />} />
             <Route path="/book/:id" element={<BookDetailPage />} />
             <Route path="/student/dashboard" element={<StudentDashboard />} />
             <Route path="/library/dashboard" element={<LibraryDashboard />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/help" element={<HelpPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/safety" element={<SafetyPage />} />
+            <Route path="/disputes" element={<DisputePage />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
           </Routes>
         </main>
         

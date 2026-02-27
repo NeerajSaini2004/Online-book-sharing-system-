@@ -175,6 +175,11 @@ class ApiService {
     return this.handleResponse(response);
   }
 
+  async getBlog(id) {
+    const response = await fetch(`${API_BASE_URL}/blogs/${id}`);
+    return this.handleResponse(response);
+  }
+
   async uploadNotes(data) {
     const response = await fetch(`${API_BASE_URL}/notes/upload`, {
       method: 'POST',

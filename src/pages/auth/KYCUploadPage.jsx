@@ -36,20 +36,23 @@ export const KYCUploadPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary-50 to-primary-50 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-3xl font-display font-bold text-secondary-900 mb-4">KYC Verification</h1>
-          <p className="text-secondary-600">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl mb-4 shadow-lg">
+            <DocumentArrowUpIcon className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent mb-4">KYC Verification</h1>
+          <p className="text-lg text-gray-600 max-w-xl mx-auto">
             Upload your documents to verify your identity and start selling on SmartBook Sharing
           </p>
         </motion.div>
 
-        <Card>
+        <Card className="shadow-2xl border-0">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -59,26 +62,28 @@ export const KYCUploadPage = () => {
                 <button
                   type="button"
                   onClick={() => setKycType('student')}
-                  className={`p-4 border-2 rounded-xl text-center transition-colors ${
+                  className={`p-6 border-2 rounded-2xl text-center transition-all transform hover:scale-105 ${
                     kycType === 'student'
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-purple-50 text-primary-700 shadow-lg'
+                      : 'border-gray-200 hover:border-primary-300 hover:shadow-md'
                   }`}
                 >
-                  <div className="font-medium">Student</div>
-                  <div className="text-sm text-gray-500">College ID required</div>
+                  <div className="text-3xl mb-2">🎓</div>
+                  <div className="font-semibold text-lg">Student</div>
+                  <div className="text-sm text-gray-500 mt-1">College ID required</div>
                 </button>
                 <button
                   type="button"
                   onClick={() => setKycType('library')}
-                  className={`p-4 border-2 rounded-xl text-center transition-colors ${
+                  className={`p-6 border-2 rounded-2xl text-center transition-all transform hover:scale-105 ${
                     kycType === 'library'
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-purple-50 text-primary-700 shadow-lg'
+                      : 'border-gray-200 hover:border-primary-300 hover:shadow-md'
                   }`}
                 >
-                  <div className="font-medium">Library</div>
-                  <div className="text-sm text-gray-500">GST/Registration required</div>
+                  <div className="text-3xl mb-2">📚</div>
+                  <div className="font-semibold text-lg">Library</div>
+                  <div className="text-sm text-gray-500 mt-1">GST/Registration required</div>
                 </button>
               </div>
             </div>
@@ -113,11 +118,15 @@ export const KYCUploadPage = () => {
               </div>
             )}
 
-            <div className="bg-primary-50 border border-primary-200 rounded-xl p-4 shadow-soft">
+            <div className="bg-gradient-to-r from-primary-50 to-purple-50 border-2 border-primary-200 rounded-2xl p-5 shadow-md">
               <div className="flex items-start space-x-3">
-                <DocumentArrowUpIcon className="h-5 w-5 text-primary-600 mt-0.5" />
-                <div className="text-sm text-primary-700">
-                  <p className="font-semibold mb-1">Verification Process</p>
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <DocumentArrowUpIcon className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+                <div className="text-sm text-gray-700">
+                  <p className="font-semibold text-gray-900 mb-1">⚡ Quick Verification Process</p>
                   <p>Your documents will be reviewed within 24-48 hours. You'll receive an email notification once verified.</p>
                 </div>
               </div>
@@ -125,10 +134,10 @@ export const KYCUploadPage = () => {
 
             <Button 
               type="submit" 
-              className="w-full" 
+              className="w-full bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-lg py-6 rounded-xl shadow-lg hover:shadow-xl transition-all" 
               disabled={uploadedFiles.length === 0 || loading}
             >
-              {loading ? 'Submitting...' : 'Submit for Verification'}
+              {loading ? 'Submitting...' : '✓ Submit for Verification'}
             </Button>
           </form>
         </Card>

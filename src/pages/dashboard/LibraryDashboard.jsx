@@ -21,6 +21,9 @@ export const LibraryDashboard = () => {
   const [showBarcodeModal, setShowBarcodeModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [showProcessModal, setShowProcessModal] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showMessagesModal, setShowMessagesModal] = useState(false);
+  const [libraryMessages, setLibraryMessages] = useState([]);
   const [orderStatus, setOrderStatus] = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [selectedBook, setSelectedBook] = useState(null);
@@ -64,6 +67,11 @@ Thank you for your business!
     a.download = `invoice-${order.id}-${Date.now()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const loadMessages = () => {
+    const messages = JSON.parse(localStorage.getItem('libraryMessages') || '[]');
+    setLibraryMessages(messages);
   };
 
   const generateReport = () => {
@@ -139,10 +147,36 @@ Orders This Month: 89
     }
   ];
 
+  const bookRequests = [
+    {
+      id: 1,
+      title: 'Advanced Data Structures',
+      author: 'Peter Brass',
+      requestedBy: 'Central Library',
+      urgency: 'high',
+      budget: '₹800',
+      description: 'Need for Computer Science department',
+      date: '2 days ago',
+      status: 'open'
+    },
+    {
+      id: 2,
+      title: 'Machine Learning Yearning',
+      author: 'Andrew Ng',
+      requestedBy: 'City Library',
+      urgency: 'medium',
+      budget: '₹600',
+      description: 'Popular demand from students',
+      date: '1 week ago',
+      status: 'fulfilled'
+    }
+  ];
+
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'inventory', label: 'Inventory' },
     { id: 'orders', label: 'Orders' },
+    { id: 'requests', label: 'Book Requests' },
     { id: 'analytics', label: 'Analytics' }
   ];
 
@@ -331,6 +365,45 @@ Orders This Month: 89
                       <Button onClick={() => { setSelectedOrder(order); setOrderStatus(order.status); setTrackingNumber(''); setShowProcessModal(true); }} variant="outline" size="sm">Process</Button>
                       <Button onClick={() => generateInvoice(order)} variant="outline" size="sm">Invoice</Button>
                       <Button onClick={() => { setSelectedOrder(order); setShowChatModal(true); setChatMessages([{ sender: 'buyer', text: `Hi, I ordered ${order.book}` }]); }} size="sm">Chat</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {activeTab === 'requests' && (
+            <Card>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-display font-bold text-secondary-900">Book Requests</h3>
+                <div className="flex space-x-2">
+                  <Button onClick={() => { loadMessages(); setShowMessagesModal(true); }} variant="outline">
+                    Messages ({JSON.parse(localStorage.getItem('libraryMessages') || '[]').filter(m => !m.read).length})
+                  </Button>
+                  <Button onClick={() => setShowRequestModal(true)}>
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Request Book
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {bookRequests.map((request) => (
+                  <div key={request.id} className="border border-secondary-200 rounded-xl p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-secondary-900 mb-1">{request.title}</h4>
+                        <p className="text-sm text-secondary-600 mb-1">Author: {request.author}</p>
+                        <p className="text-sm text-secondary-600 mb-2">{request.description}</p>
+                        <div className="flex items-center space-x-4 text-sm">
+                          <span className="text-primary-600">Budget: {request.budget}</span>
+                          <Badge variant={request.urgency === 'high' ? 'danger' : 'warning'}>{request.urgency}</Badge>
+                          <span className="text-secondary-500">{request.date}</span>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm">Contact</Button>
+                        <Button size="sm">Fulfill</Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -556,6 +629,80 @@ Orders This Month: 89
                 <div className="flex space-x-2">
                   <Button type="button" onClick={() => setShowAddBookModal(false)} variant="outline" className="flex-1">Cancel</Button>
                   <Button type="submit" className="flex-1">Add Book</Button>
+                </div>
+              </form>
+            </Card>
+          </div>
+        )}
+
+        {/* Messages Modal */}
+        {showMessagesModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold">Student Messages & Offers</h3>
+                <Button onClick={() => setShowMessagesModal(false)} variant="outline" size="sm">Close</Button>
+              </div>
+              <div className="space-y-4">
+                {libraryMessages.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No messages yet</p>
+                ) : (
+                  libraryMessages.map((msg) => (
+                    <div key={msg.id} className={`border rounded-lg p-4 ${!msg.read ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 className="font-semibold">{msg.type === 'offer' ? '📚 Book Offer' : '💬 Inquiry'}</h4>
+                          <p className="text-sm text-gray-600">Book: {msg.bookTitle}</p>
+                          <p className="text-sm text-gray-600">From: {msg.studentName}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">{new Date(msg.timestamp).toLocaleString()}</p>
+                          {!msg.read && <Badge variant="primary" size="sm">New</Badge>}
+                        </div>
+                      </div>
+                      
+                      {msg.type === 'offer' ? (
+                        <div className="bg-white p-3 rounded border">
+                          <p className="text-sm mb-1"><strong>Offered Price:</strong> ₹{msg.price}</p>
+                          <p className="text-sm mb-1"><strong>Condition:</strong> {msg.condition}</p>
+                          <p className="text-sm mb-1"><strong>Contact:</strong> {msg.phone}</p>
+                        </div>
+                      ) : (
+                        <div className="bg-white p-3 rounded border">
+                          <p className="text-sm mb-1"><strong>Message:</strong> {msg.message}</p>
+                          <p className="text-sm mb-1"><strong>Contact:</strong> {msg.phone}</p>
+                        </div>
+                      )}
+                      
+                      <div className="flex space-x-2 mt-3">
+                        <Button onClick={() => alert(`Calling ${msg.phone}...`)} size="sm">Call Student</Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Book Request Modal */}
+        {showRequestModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="max-w-lg w-full mx-4">
+              <h3 className="text-xl font-bold mb-4">Request a Book</h3>
+              <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('Book request submitted!'); setShowRequestModal(false); }}>
+                <input type="text" placeholder="Book Title" className="w-full p-3 border rounded-lg" required />
+                <input type="text" placeholder="Author" className="w-full p-3 border rounded-lg" />
+                <select className="w-full p-3 border rounded-lg">
+                  <option>Select Budget Range</option>
+                  <option>₹0 - ₹300</option>
+                  <option>₹300 - ₹600</option>
+                  <option>₹600+</option>
+                </select>
+                <textarea placeholder="Description" className="w-full p-3 border rounded-lg h-20"></textarea>
+                <div className="flex space-x-3">
+                  <Button type="button" onClick={() => setShowRequestModal(false)} variant="outline" className="flex-1">Cancel</Button>
+                  <Button type="submit" className="flex-1">Submit Request</Button>
                 </div>
               </form>
             </Card>

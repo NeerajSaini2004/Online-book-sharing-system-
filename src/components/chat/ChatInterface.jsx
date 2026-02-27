@@ -7,15 +7,6 @@ import {
   EllipsisVerticalIcon 
 } from '@heroicons/react/24/outline';
 import { Button } from '../ui/Button';
-import { ChatMessage } from '../../types';
-
-interface ChatInterfaceProps {
-  messages: ChatMessage[];
-  onSendMessage: (content, type: 'text' | 'image') => void;
-  currentUserId;
-  recipientName;
-  recipientAvatar?;
-}
 
 export const ChatInterface = ({
   messages,
@@ -43,7 +34,7 @@ export const ChatInterface = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();

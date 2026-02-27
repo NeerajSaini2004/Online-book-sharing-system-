@@ -1,205 +1,188 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  PlusIcon,
+  ArrowLeftIcon,
   ChatBubbleLeftIcon,
   EyeIcon,
-  HeartIcon,
-  MagnifyingGlassIcon,
-  FireIcon
+  HeartIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
+import { apiService } from '../../services/api';
 
 export const FormPage = () => {
-  const [activeTab, setActiveTab] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [blog, setBlog] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
+  const [showReplyBox, setShowReplyBox] = useState(false);
+  const [replyText, setReplyText] = useState('');
 
-  const categories = [
-    { id: 'all', name: 'All Posts', count: 156 },
-    { id: 'textbooks', name: 'Textbooks', count: 45 },
-    { id: 'notes', name: 'Study Notes', count: 32 },
-    { id: 'exams', name: 'Exam Prep', count: 28 },
-    { id: 'general', name: 'General', count: 51 }
-  ];
+  useEffect(() => {
+    loadBlog();
+  }, [id]);
 
-  const posts = [
-    {
-      id: 1,
-      title: 'Best Physics textbook for JEE preparation?',
-      content: 'Looking for recommendations for physics books that cover JEE syllabus comprehensively...',
-      author: 'Rahul Kumar',
-      authorRole: 'student',
-      category: 'textbooks',
-      replies: 12,
-      views: 234,
-      likes: 18,
-      timeAgo: '2 hours ago',
-      tags: ['JEE', 'Physics', 'Textbooks']
-    },
-    {
-      id: 2,
-      title: 'Organic Chemistry notes sharing',
-      content: 'I have compiled detailed notes for organic chemistry reactions. Happy to share with fellow students...',
-      author: 'Priya Sharma',
-      authorRole: 'student',
-      category: 'notes',
-      replies: 8,
-      views: 156,
-      likes: 25,
-      timeAgo: '4 hours ago',
-      tags: ['Chemistry', 'Notes', 'Organic']
-    },
-    {
-      id: 3,
-      title: 'NEET Biology preparation strategy',
-      content: 'What is the most effective way to prepare biology for NEET? Should I focus more on NCERT or reference books?',
-      author: 'Central Library',
-      authorRole: 'library',
-      category: 'exams',
-      replies: 15,
-      views: 389,
-      likes: 32,
-      timeAgo: '1 day ago',
-      tags: ['NEET', 'Biology', 'Strategy']
+  const loadBlog = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getBlog(id);
+      if (response.success) {
+        const foundBlog = response.data;
+        setBlog({
+          id: foundBlog._id,
+          title: foundBlog.title,
+          content: foundBlog.content,
+          author: foundBlog.author?.name || 'Anonymous',
+          authorRole: foundBlog.author?.role || 'student',
+          category: foundBlog.category,
+          replies: foundBlog.replies || 0,
+          views: foundBlog.views || 0,
+          likes: foundBlog.likes || 0,
+          tags: foundBlog.tags || [],
+          createdAt: new Date(foundBlog.createdAt).toLocaleDateString()
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load blog:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const filteredPosts = posts.filter(post =>
-    (activeTab === 'all' || post.category === activeTab) &&
-    (post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.content.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const handleLike = () => {
+    setLiked(!liked);
+    setBlog(prev => ({
+      ...prev,
+      likes: liked ? prev.likes - 1 : prev.likes + 1
+    }));
+  };
+
+  const handleReply = () => {
+    if (replyText.trim()) {
+      setBlog(prev => ({
+        ...prev,
+        replies: prev.replies + 1
+      }));
+      setReplyText('');
+      setShowReplyBox(false);
+      alert('Reply posted successfully!');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!blog) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Blog not found</p>
+          <Button onClick={() => navigate('/blog')}>Back to Blog</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Forum</h1>
-            <p className="text-gray-600 mt-2">Ask questions, share knowledge, and connect with fellow learners</p>
-          </div>
-          <Button className="flex items-center gap-2">
-            <PlusIcon className="h-5 w-5" />
-            New Post
-          </Button>
-        </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Button onClick={() => navigate('/blog')} variant="outline" className="mb-6">
+          <ArrowLeftIcon className="h-4 w-4 mr-2" />
+          Back to Blog
+        </Button>
 
-        <div className="grid lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-1">
-            <Card className="mb-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
-              <div className="space-y-2">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setActiveTab(category.id)}
-                    className={`w-full flex justify-between items-center p-3 rounded-lg text-left transition-colors ${activeTab === category.id
-                        ? 'bg-primary-50 text-primary-600 border border-primary-200'
-                        : 'hover:bg-gray-50'
-                      }`}
-                  >
-                    <span className="font-medium">{category.name}</span>
-                    <Badge variant="secondary">{category.count}</Badge>
-                  </button>
-                ))}
+        <Card>
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-medium">
+                  {blog.author.split(' ').map(n => n[0]).join('')}
+                </span>
               </div>
-            </Card>
-
-            <Card>
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <FireIcon className="h-5 w-5 text-orange-500" />
-                Popular Tags
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {['JEE', 'NEET', 'Physics', 'Chemistry', 'Mathematics', 'Biology'].map((tag) => (
-                  <Badge key={tag} variant="outline" className="cursor-pointer hover:bg-primary-50">
-                    {tag}
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-900">{blog.author}</span>
+                  <Badge variant={blog.authorRole === 'library' ? 'primary' : 'secondary'} size="sm">
+                    {blog.authorRole}
                   </Badge>
-                ))}
+                </div>
+                <p className="text-sm text-gray-500">{blog.createdAt}</p>
               </div>
-            </Card>
-          </div>
-
-          <div className="lg:col-span-3">
-            <div className="mb-6">
-              <Input
-                placeholder="Search discussions..."
-                icon={<MagnifyingGlassIcon />}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
             </div>
 
-            <div className="space-y-4">
-              {filteredPosts.map((post, index) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Card hover className="cursor-pointer">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
-                          <span className="text-white font-medium text-sm">
-                            {post.author.split(' ').map(n => n[0]).join('')}
-                          </span>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 hover:text-primary-600 transition-colors">
-                            {post.title}
-                          </h3>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <span>{post.author}</span>
-                            <Badge variant={post.authorRole === 'library' ? 'primary' : 'secondary'} size="sm">
-                              {post.authorRole}
-                            </Badge>
-                            <span>•</span>
-                            <span>{post.timeAgo}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">{blog.title}</h1>
 
-                    <p className="text-gray-600 mb-4">{post.content}</p>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {post.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" size="sm">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-6 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <ChatBubbleLeftIcon className="h-4 w-4" />
-                          <span>{post.replies} replies</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <EyeIcon className="h-4 w-4" />
-                          <span>{post.views} views</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <HeartIcon className="h-4 w-4" />
-                          <span>{post.likes} likes</span>
-                        </div>
-                      </div>
-                      <Badge variant="outline" size="sm">
-                        {post.category}
-                      </Badge>
-                    </div>
-                  </Card>
-                </motion.div>
+            <div className="flex flex-wrap gap-2 mb-6">
+              {blog.tags.map((tag) => (
+                <Badge key={tag} variant="outline">
+                  {tag}
+                </Badge>
               ))}
+              <Badge variant="outline" className="capitalize">
+                {blog.category}
+              </Badge>
+            </div>
+
+            <div className="flex items-center gap-6 text-sm text-gray-500 mb-6 pb-6 border-b">
+              <div className="flex items-center gap-1">
+                <EyeIcon className="h-4 w-4" />
+                <span>{blog.views} views</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <HeartIcon className="h-4 w-4" />
+                <span>{blog.likes} likes</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <ChatBubbleLeftIcon className="h-4 w-4" />
+                <span>{blog.replies} replies</span>
+              </div>
             </div>
           </div>
-        </div>
+
+          <div className="prose max-w-none">
+            <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">{blog.content}</p>
+          </div>
+
+          <div className="mt-8 pt-6 border-t">
+            <div className="flex gap-3 mb-4">
+              <Button variant="outline" onClick={handleLike} className={liked ? 'bg-red-50 border-red-300 text-red-600' : ''}>
+                <HeartIcon className={`h-4 w-4 mr-2 ${liked ? 'fill-current' : ''}`} />
+                {liked ? 'Liked' : 'Like'}
+              </Button>
+              <Button variant="outline" onClick={() => setShowReplyBox(!showReplyBox)}>
+                <ChatBubbleLeftIcon className="h-4 w-4 mr-2" />
+                Reply
+              </Button>
+            </div>
+
+            {showReplyBox && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <textarea
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Write your reply..."
+                  className="w-full p-3 border rounded-lg mb-3"
+                  rows="3"
+                />
+                <div className="flex gap-2">
+                  <Button onClick={handleReply} size="sm">Post Reply</Button>
+                  <Button onClick={() => setShowReplyBox(false)} variant="outline" size="sm">Cancel</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   );
