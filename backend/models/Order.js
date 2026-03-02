@@ -1,66 +1,84 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-  buyer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  seller: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  listing: {
+  // Book Details
+  bookId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Listing',
     required: true
   },
-  quantity: {
-    type: Number,
-    default: 1,
-    min: 1
+  bookTitle: {
+    type: String,
+    required: true
   },
-  totalAmount: {
+  bookImage: String,
+  
+  // Buyer Details
+  buyerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  buyerName: String,
+  buyerEmail: String,
+  deliveryAddress: {
+    type: String,
+    required: true
+  },
+  
+  // Seller Details
+  sellerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  sellerName: String,
+  
+  // Order Details
+  amount: {
     type: Number,
     required: true
   },
+  
+  // Payment Details
   paymentMethod: {
     type: String,
-    enum: ['upi', 'card', 'netbanking', 'wallet', 'cod'],
-    required: true
+    enum: ['cod', 'online'],
+    default: 'online'
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'failed', 'refunded'],
-    default: 'pending'
+    enum: ['Pending', 'Paid', 'Released'],
+    default: 'Pending'
   },
-  orderStatus: {
+  razorpayOrderId: String,
+  razorpayPaymentId: String,
+  
+  // Delivery Details
+  deliveryStatus: {
     type: String,
-    enum: ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled', 'disputed'],
-    default: 'placed'
+    enum: ['Pending', 'Shipped', 'Out for Delivery', 'Delivered'],
+    default: 'Pending'
   },
-  deliveryAddress: {
-    name: String,
-    phone: String,
-    address: String,
-    city: String,
-    state: String,
-    pincode: String
+  trackingId: {
+    type: String,
+    unique: true
   },
-  trackingInfo: {
-    courier: String,
-    trackingNumber: String,
-    estimatedDelivery: Date
-  },
-  escrowReleased: {
-    type: Boolean,
-    default: false
-  },
-  escrowReleaseDate: Date,
-  notes: String
-}, {
-  timestamps: true
+  estimatedDeliveryDate: Date,
+  actualDeliveryDate: Date,
+  
+  // Additional Info
+  notes: String,
+  cancelReason: String
+  
+}, { timestamps: true });
+
+// Generate tracking ID before saving
+orderSchema.pre('save', function(next) {
+  if (!this.trackingId) {
+    this.trackingId = 'TRK' + Math.floor(100000 + Math.random() * 900000);
+  }
+  next();
 });
 
 module.exports = mongoose.model('Order', orderSchema);

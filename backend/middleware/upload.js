@@ -8,6 +8,8 @@ const storage = multer.diskStorage({
       cb(null, 'uploads/books/');
     } else if (file.fieldname === 'noteFile' || file.fieldname === 'notesFile') {
       cb(null, 'uploads/notes/');
+    } else if (file.fieldname === 'documents') {
+      cb(null, 'uploads/kyc/');
     } else {
       cb(null, 'uploads/');
     }
@@ -20,7 +22,7 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  const allowedFields = ['bookImage', 'noteFile', 'notesFile', 'file'];
+  const allowedFields = ['bookImage', 'noteFile', 'notesFile', 'file', 'documents'];
   
   if (!allowedFields.includes(file.fieldname)) {
     return cb(new Error(`Unexpected field: ${file.fieldname}`), false);
@@ -33,13 +35,13 @@ const fileFilter = (req, file, cb) => {
     } else {
       cb(new Error('Only image files are allowed for book images'), false);
     }
-  } else if (file.fieldname === 'noteFile' || file.fieldname === 'notesFile' || file.fieldname === 'file') {
+  } else if (file.fieldname === 'noteFile' || file.fieldname === 'notesFile' || file.fieldname === 'file' || file.fieldname === 'documents') {
     // Allow PDF and document files
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF and Word documents are allowed for notes'), false);
+      cb(new Error('Only PDF, Word documents, and images are allowed'), false);
     }
   } else {
     cb(null, true);

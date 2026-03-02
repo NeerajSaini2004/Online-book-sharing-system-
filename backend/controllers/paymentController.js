@@ -1,5 +1,6 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const Order = require('../models/Order');
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -41,7 +42,12 @@ exports.createOrder = async (req, res) => {
 
 exports.verifyPayment = async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { 
+      razorpay_order_id, 
+      razorpay_payment_id, 
+      razorpay_signature,
+      orderData
+    } = req.body;
     
     const sign = razorpay_order_id + '|' + razorpay_payment_id;
     const expectedSign = crypto
@@ -50,7 +56,26 @@ exports.verifyPayment = async (req, res) => {
       .digest('hex');
 
     if (razorpay_signature === expectedSign) {
-      res.json({ success: true, message: 'Payment verified successfully' });
+      const estimatedDeliveryDate = new Date();
+      estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + 5);
+
+      const order = new Order({
+        ...orderData,
+        buyerId: req.user._id,
+        paymentStatus: 'Paid',
+        deliveryStatus: 'Pending',
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        estimatedDeliveryDate
+      });
+
+      await order.save();
+
+      res.json({ 
+        success: true, 
+        message: 'Payment verified and order created successfully',
+        order 
+      });
     } else {
       res.status(400).json({ success: false, message: 'Invalid signature' });
     }

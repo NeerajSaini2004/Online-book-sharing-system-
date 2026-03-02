@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const updateuser = (updates) => {
+  const updateUser = (updates) => {
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);
     localStorage.setItem('smartbook_user', JSON.stringify(updatedUser));
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
-    updateuser,
+    updateUser,
     loading
   };
 

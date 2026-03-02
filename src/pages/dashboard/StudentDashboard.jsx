@@ -470,7 +470,7 @@ export const StudentDashboard = () => {
                 <div className="text-center py-12">
                   <p className="text-gray-500 mb-2">Your wishlist is empty</p>
                   <p className="text-sm text-gray-400 mb-4">Browse books and add them to your wishlist</p>
-                  <Button onClick={() => navigate('/search')}>Browse Books</Button>
+                  <Button onClick={() => navigate('/browse')}>Browse Books</Button>
                 </div>
               ) : (
                 <div className="space-y-4">

@@ -21,8 +21,10 @@ export const SellPage = () => {
     board: 'CBSE',
     description: '',
     images: [],
-    imageFiles: [] // Store actual files
+    imageFiles: []
   });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -46,10 +48,27 @@ export const SellPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!acceptedTerms) {
+      alert('Please accept the Terms & Conditions');
+      return;
+    }
+    
     if (!formData.title || !formData.author || !formData.price) {
       alert('Please fill in all required fields');
       return;
     }
+    
+    // Content validation
+    const inappropriateKeywords = ['sex', 'adult', 'porn', 'nude', 'explicit'];
+    const contentToCheck = `${formData.title} ${formData.description}`.toLowerCase();
+    const hasInappropriate = inappropriateKeywords.some(word => contentToCheck.includes(word));
+    
+    if (hasInappropriate) {
+      alert('⚠️ Content Policy Violation\n\nYour listing contains inappropriate content and cannot be published.\n\nOnly academic books are allowed on this platform.');
+      return;
+    }
+    
     try {
       const submitData = {
         title: formData.title,
@@ -59,16 +78,16 @@ export const SellPage = () => {
         originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
         condition: formData.condition.toLowerCase(),
         category: formData.category.toLowerCase(),
-        description: formData.description
+        description: formData.description,
+        status: 'pending' // Admin review required
       };
       
-      // Add first image file if exists
       if (formData.imageFiles.length > 0) {
         submitData.bookImage = formData.imageFiles[0];
       }
       
       await apiService.createListing(submitData);
-      alert('Book listed successfully!');
+      alert('✅ Book submitted for review!\n\nYour listing will be reviewed by our team within 24 hours.');
       navigate('/student/dashboard');
     } catch (error) {
       alert('Failed to list book: ' + error.message);
@@ -273,6 +292,40 @@ export const SellPage = () => {
               </div>
             </Card>
           </div>
+
+          {/* Content Policy Warning */}
+          <Card className="mt-8 bg-yellow-50 border-2 border-yellow-400">
+            <div className="flex items-start space-x-3">
+              <div className="text-2xl">⚠️</div>
+              <div>
+                <h3 className="font-bold text-yellow-900 mb-2">Content Policy</h3>
+                <ul className="text-sm text-yellow-800 space-y-1">
+                  <li>✓ Only academic and educational books allowed</li>
+                  <li>✗ No adult, sexual, or inappropriate content</li>
+                  <li>✗ No pirated or illegal copies</li>
+                  <li>• All listings are reviewed before publishing</li>
+                  <li>• Violations may result in account suspension</li>
+                </ul>
+              </div>
+            </div>
+          </Card>
+
+          {/* Terms & Conditions */}
+          <Card className="mt-4">
+            <label className="flex items-start space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-1"
+                required
+              />
+              <span className="text-sm text-gray-700">
+                I confirm that this book is academic/educational content and complies with the platform's content policy. 
+                I understand that inappropriate content will be rejected and may result in account suspension.
+              </span>
+            </label>
+          </Card>
 
           <div className="mt-8 flex justify-end gap-4">
             <Button type="button" onClick={handleSaveDraft} variant="outline">Save as Draft</Button>
