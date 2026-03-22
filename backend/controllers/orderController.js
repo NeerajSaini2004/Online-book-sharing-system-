@@ -27,7 +27,7 @@ exports.createOrder = async (req, res) => {
       bookId,
       bookTitle,
       bookImage,
-      buyerId: req.user._id, // From auth middleware
+      buyerId: req.user._id,
       buyerName,
       buyerEmail,
       deliveryAddress,

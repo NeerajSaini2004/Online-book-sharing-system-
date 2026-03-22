@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
-const { protect } = require('../middleware/auth'); // Your auth middleware
+const { protect } = require('../middleware/auth');
 
 // All routes require authentication
 router.use(protect);

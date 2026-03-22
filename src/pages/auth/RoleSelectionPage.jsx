@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { AcademicCapIcon, BuildingLibraryIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { useAuth } from '../../context/AuthContext';
+import {useAuth} from "../../context/AuthContext";
 
 export const RoleSelectionPage = () => {
   const [selectedRole, setSelectedRole] = useState('student');
@@ -43,14 +43,15 @@ export const RoleSelectionPage = () => {
   ];
 
   const handleContinue = () => {
-    if (!selectedRole) return;
-    
-    updateuser({ role: selectedRole });
-    
-    if (selectedRole === 'library') {
-      navigate('/kyc-upload');
-    } else {
-      navigate('/student/dashboard');
+    if (selectedRole) {
+     
+      updateuser({ role: selectedRole });
+      if (selectedRole === 'library') {
+        navigate('/library/dashboard');
+      } else {
+        navigate('/student/dashboard');
+      }
+     
     }
   };
 

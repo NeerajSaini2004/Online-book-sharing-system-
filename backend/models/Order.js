@@ -7,10 +7,7 @@ const orderSchema = new mongoose.Schema({
     ref: 'Listing',
     required: true
   },
-  bookTitle: {
-    type: String,
-    required: true
-  },
+  bookTitle: String,
   bookImage: String,
   
   // Buyer Details
@@ -68,9 +65,7 @@ const orderSchema = new mongoose.Schema({
   actualDeliveryDate: Date,
   
   // Additional Info
-  notes: String,
-  cancelReason: String
-  
+  notes: String
 }, { timestamps: true });
 
 // Generate tracking ID before saving

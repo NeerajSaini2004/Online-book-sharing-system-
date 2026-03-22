@@ -25,6 +25,7 @@ exports.createOrder = async (req, res) => {
       amount: amount * 100, // amount in paise
       currency: 'INR',
       receipt: `receipt_${Date.now()}`,
+      payment_capture: 1,
       notes: {
         bookTitle,
         userId: req.user?._id || 'guest'
@@ -35,7 +36,51 @@ exports.createOrder = async (req, res) => {
     console.log('Order created:', order);
     res.json({ success: true, order });
   } catch (error) {
-    console.error('Payment error:', error);
+    console.error('Payment error details:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data
+    });
+    res.status(500).json({ 
+      success: false, 
+      message: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+
+exports.createCODOrder = async (req, res) => {
+  try {
+    const { orderData } = req.body;
+    
+    if (!orderData) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Order data is required' 
+      });
+    }
+
+    const estimatedDeliveryDate = new Date();
+    estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + 7); // COD orders take longer
+
+    const order = new Order({
+      ...orderData,
+      buyerId: req.user._id,
+      paymentMethod: 'COD',
+      paymentStatus: 'Pending',
+      deliveryStatus: 'Pending',
+      estimatedDeliveryDate
+    });
+
+    await order.save();
+
+    res.json({ 
+      success: true, 
+      message: 'COD order created successfully',
+      order 
+    });
+  } catch (error) {
+    console.error('COD order error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -62,6 +107,7 @@ exports.verifyPayment = async (req, res) => {
       const order = new Order({
         ...orderData,
         buyerId: req.user._id,
+        paymentMethod: 'Online',
         paymentStatus: 'Paid',
         deliveryStatus: 'Pending',
         razorpayOrderId: razorpay_order_id,
@@ -79,6 +125,34 @@ exports.verifyPayment = async (req, res) => {
     } else {
       res.status(400).json({ success: false, message: 'Invalid signature' });
     }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+exports.confirmDelivery = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { paymentReceived } = req.body;
+    
+    const order = await Order.findById(orderId);
+    
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    
+    order.deliveryStatus = 'Delivered';
+    
+    if (order.paymentMethod === 'COD' && paymentReceived) {
+      order.paymentStatus = 'Paid';
+    }
+    
+    await order.save();
+    
+    res.json({ 
+      success: true, 
+      message: 'Delivery confirmed successfully',
+      order 
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
