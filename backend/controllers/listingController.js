@@ -13,6 +13,8 @@ exports.createListing = async (req, res) => {
     
     listingData.status = 'active';
     if (!listingData.description) listingData.description = 'No description provided';
+    // Store category as-is, no lowercase conversion
+    if (listingData.category) listingData.category = listingData.category.trim();
 
     // Handle mock user IDs
     const mongoose = require('mongoose');
@@ -27,6 +29,7 @@ exports.createListing = async (req, res) => {
     const listing = await Listing.create({ ...listingData, seller: sellerId });
     res.status(201).json({ success: true, data: listing });
   } catch (error) {
+    console.error('createListing error:', error.message);
     res.status(400).json({ success: false, message: error.message });
   }
 };
