@@ -33,7 +33,7 @@ const listingSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['upsc', 'gate', 'neet', 'jee', 'engineering', 'medical', 'law', 'mba', 'school', 'notes', 'mathematics', 'science', 'literature', 'history', 'commerce']
+    enum: ['upsc', 'gate', 'neet', 'jee', 'engineering', 'medical', 'law', 'mba', 'school', 'notes', 'mathematics', 'science', 'literature', 'history', 'commerce', 'computer science', 'physics', 'chemistry', 'biology', 'english', 'geography', 'political science', 'economics', 'database']
   },
   subject: String,
   course: String,
