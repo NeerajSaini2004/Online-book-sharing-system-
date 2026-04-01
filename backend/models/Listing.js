@@ -27,7 +27,7 @@ const listingSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: true
+    default: 'No description provided'
   },
   category: {
     type: String,

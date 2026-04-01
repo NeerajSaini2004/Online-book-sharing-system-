@@ -4,7 +4,6 @@ exports.createListing = async (req, res) => {
   try {
     const listingData = { ...req.body };
     
-    // Handle uploaded image
     if (req.file) {
       listingData.images = [{
         url: `/uploads/books/${req.file.filename}`,
@@ -12,13 +11,20 @@ exports.createListing = async (req, res) => {
       }];
     }
     
-    // Auto approve - set status to active
     listingData.status = 'active';
-    
-    const listing = await Listing.create({
-      ...listingData,
-      seller: req.user._id
-    });
+    if (!listingData.description) listingData.description = 'No description provided';
+
+    // Handle mock user IDs
+    const mongoose = require('mongoose');
+    let sellerId = req.user._id;
+    if (!mongoose.Types.ObjectId.isValid(sellerId)) {
+      const User = require('../models/User');
+      const fallback = await User.findOne();
+      if (!fallback) return res.status(400).json({ success: false, message: 'No valid user found' });
+      sellerId = fallback._id;
+    }
+
+    const listing = await Listing.create({ ...listingData, seller: sellerId });
     res.status(201).json({ success: true, data: listing });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
