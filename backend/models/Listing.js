@@ -23,7 +23,7 @@ const listingSchema = new mongoose.Schema({
   originalPrice: Number,
   condition: {
     type: String,
-    required: true
+    default: 'Good'
   },
   description: {
     type: String,
@@ -31,7 +31,7 @@ const listingSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: true
+    default: 'General'
   },
   subject: String,
   course: String,
