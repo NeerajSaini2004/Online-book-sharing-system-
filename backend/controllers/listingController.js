@@ -1,24 +1,24 @@
 const Listing = require('../models/Listing');
+const mongoose = require('mongoose');
 
 exports.createListing = async (req, res) => {
   try {
+    console.log('API HIT 🚀', req.body);
+
     const listingData = { ...req.body };
-    
+
     if (req.file) {
       listingData.images = [{
         url: `/uploads/books/${req.file.filename}`,
         caption: 'Book image'
       }];
     }
-    
-    // Force set defaults - bypass any model validation
+
     listingData.status = 'active';
     listingData.condition = String(listingData.condition || 'Good');
     listingData.category = String(listingData.category || 'General');
     listingData.description = listingData.description || 'No description provided';
 
-    // Use insertOne to bypass mongoose validation completely
-    const mongoose = require('mongoose');
     let sellerId = req.user._id;
     if (!mongoose.Types.ObjectId.isValid(sellerId)) {
       const User = require('../models/User');
@@ -27,16 +27,8 @@ exports.createListing = async (req, res) => {
       sellerId = fallback._id;
     }
 
-    // Use db.collection directly to bypass mongoose schema validation
-    const db = mongoose.connection.db;
-    const result = await db.collection('listings').insertOne({
-      ...listingData,
-      seller: new mongoose.Types.ObjectId(sellerId),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-
-    res.status(201).json({ success: true, data: { _id: result.insertedId, ...listingData } });
+    const listing = await Listing.create({ ...listingData, seller: sellerId });
+    res.status(201).json({ success: true, data: listing });
   } catch (error) {
     console.error('createListing error:', error.message);
     res.status(400).json({ success: false, message: error.message });
@@ -46,7 +38,6 @@ exports.createListing = async (req, res) => {
 exports.getListings = async (req, res) => {
   try {
     const { search, category, condition } = req.query;
-    
     const filter = { status: 'active' };
     if (search) filter.$or = [
       { title: { $regex: search, $options: 'i' } },
@@ -54,7 +45,7 @@ exports.getListings = async (req, res) => {
     ];
     if (category && category !== 'All Categories') filter.category = { $regex: category, $options: 'i' };
     if (condition && condition !== 'All Conditions') filter.condition = { $regex: condition, $options: 'i' };
-    
+
     const listings = await Listing.find(filter)
       .populate('seller', 'name email')
       .sort('-createdAt');
@@ -66,11 +57,8 @@ exports.getListings = async (req, res) => {
 
 exports.getListing = async (req, res) => {
   try {
-    const listing = await Listing.findById(req.params.id)
-      .populate('seller', 'name email');
-    if (!listing) {
-      return res.status(404).json({ success: false, message: 'Listing not found' });
-    }
+    const listing = await Listing.findById(req.params.id).populate('seller', 'name email');
+    if (!listing) return res.status(404).json({ success: false, message: 'Listing not found' });
     res.json({ success: true, data: listing });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
