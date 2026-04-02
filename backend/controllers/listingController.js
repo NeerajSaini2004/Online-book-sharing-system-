@@ -12,9 +12,9 @@ exports.createListing = async (req, res) => {
     }
     
     listingData.status = 'active';
+    listingData.condition = listingData.condition || 'Good';
+    listingData.category = listingData.category || 'General';
     if (!listingData.description) listingData.description = 'No description provided';
-    // Store category as-is, no lowercase conversion
-    if (listingData.category) listingData.category = listingData.category.trim();
 
     // Handle mock user IDs
     const mongoose = require('mongoose');
