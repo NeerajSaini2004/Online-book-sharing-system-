@@ -44,6 +44,24 @@ exports.createOrder = async (req, res) => {
 
     await order.save();
 
+    // Send inbox notification to seller
+    const User = require('../models/User');
+    if (sellerId) {
+      await User.findByIdAndUpdate(sellerId, {
+        $push: {
+          inbox: {
+            from: req.user._id,
+            fromName: buyerName || 'A Buyer',
+            bookId,
+            bookTitle,
+            message: `📦 New Order! "${bookTitle}" - ₹${amount} (${paymentMethod?.toUpperCase()}). Delivery to: ${deliveryAddress}`,
+            read: false,
+            createdAt: new Date()
+          }
+        }
+      });
+    }
+
     res.status(201).json({
       success: true,
       message: 'Order created successfully',
@@ -88,34 +106,33 @@ exports.getOrder = async (req, res) => {
   }
 };
 
-// Get all orders for a user (buyer or seller)
+// Get buyer orders
 exports.getUserOrders = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const { role } = req.query; // 'buyer' or 'seller'
-
-    let query = {};
-    if (role === 'seller') {
-      query.sellerId = userId;
-    } else {
-      query.buyerId = userId;
-    }
-
-    const orders = await Order.find(query)
+    const orders = await Order.find({ buyerId: req.user._id })
       .populate('bookId', 'title author images')
       .sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      data: orders
-    });
+    res.json({ success: true, data: orders });
   } catch (error) {
-    console.error('Get user orders error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch orders',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get seller orders
+exports.getSellerOrders = async (req, res) => {
+  try {
+    // Try both string and ObjectId match
+    const mongoose = require('mongoose');
+    const sellerId = req.user._id;
+    const orders = await Order.find({
+      $or: [
+        { sellerId: sellerId },
+        { sellerId: sellerId.toString() }
+      ]
+    }).sort({ createdAt: -1 });
+    res.json({ success: true, data: orders, debug: { sellerId: sellerId.toString(), count: orders.length } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -164,48 +181,26 @@ exports.markAsShipped = async (req, res) => {
   }
 };
 
-// Update delivery status (for admin/delivery partner)
 exports.updateDeliveryStatus = async (req, res) => {
   try {
-    const { deliveryStatus } = req.body;
+    const { deliveryStatus, trackingId } = req.body;
     const order = await Order.findById(req.params.id);
-
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found'
-      });
-    }
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
     const validStatuses = ['Pending', 'Shipped', 'Out for Delivery', 'Delivered'];
     if (!validStatuses.includes(deliveryStatus)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid delivery status'
-      });
+      return res.status(400).json({ success: false, message: 'Invalid delivery status' });
     }
 
     order.deliveryStatus = deliveryStatus;
-    
-    // Set actual delivery date when delivered
+    if (trackingId) order.trackingId = trackingId;
     if (deliveryStatus === 'Delivered' && !order.actualDeliveryDate) {
       order.actualDeliveryDate = new Date();
     }
-
     await order.save();
-
-    res.json({
-      success: true,
-      message: 'Delivery status updated',
-      data: order
-    });
+    res.json({ success: true, message: 'Order updated', data: order });
   } catch (error) {
-    console.error('Update delivery status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update status',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

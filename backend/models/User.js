@@ -31,10 +31,10 @@ const userSchema = new mongoose.Schema({
     url: String
   },
   // Student specific fields
-  // college: {
-  //   type: String,
-  //   required: function () { return this.role === 'student'; }
-  // },
+  college: {
+    type: String,
+    default: ''
+  },
   academicInterests: [String],
 
   // Library specific fields
@@ -60,8 +60,8 @@ const userSchema = new mongoose.Schema({
     default: 'pending'
   },
   kycDocuments: [{
-    type: String,
-    url: String
+    type: { type: String },
+    url: { type: String }
   }],
 
   // Ratings
@@ -78,7 +78,22 @@ const userSchema = new mongoose.Schema({
   // Social login
   googleId: String,
   facebookId: String,
-  linkedinId: String
+  linkedinId: String,
+
+  // Password reset
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
+
+  // Inbox messages
+  inbox: [{
+    from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    fromName: String,
+    bookId: String,
+    bookTitle: String,
+    message: String,
+    read: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+  }]
 }, {
   timestamps: true
 });

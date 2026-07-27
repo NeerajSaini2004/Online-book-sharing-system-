@@ -1,16 +1,28 @@
 const Listing = require('../models/Listing');
+const { uploadToCloudinary } = require('../middleware/upload');
 
 exports.createListing = async (req, res) => {
   try {
     console.log('API HIT 🚀', req.body);
-
     const listingData = { ...req.body };
 
-    if (req.file) {
-      listingData.images = [{
-        url: `/uploads/books/${req.file.filename}`,
-        caption: 'Book image'
-      }];
+    if (req.files) {
+      const images = [];
+      if (req.files.bookImage?.[0]) {
+        const url = process.env.CLOUDINARY_CLOUD_NAME
+          ? await uploadToCloudinary(req.files.bookImage[0].buffer, 'bookshare/books')
+          : `/uploads/books/${Date.now()}-${req.files.bookImage[0].originalname}`;
+        images.push({ url, caption: 'Book image' });
+      }
+      if (req.files.extraImages) {
+        for (const file of req.files.extraImages) {
+          const url = process.env.CLOUDINARY_CLOUD_NAME
+            ? await uploadToCloudinary(file.buffer, 'bookshare/books')
+            : `/uploads/books/${Date.now()}-${file.originalname}`;
+          images.push({ url, caption: 'Book image' });
+        }
+      }
+      if (images.length > 0) listingData.images = images;
     }
 
     listingData.status = 'active';
@@ -22,7 +34,7 @@ exports.createListing = async (req, res) => {
     res.status(201).json({ success: true, data: listing });
   } catch (error) {
     console.error('createListing error:', error.message);
-    res.status(400).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -48,7 +60,7 @@ exports.getListings = async (req, res) => {
 
 exports.getListing = async (req, res) => {
   try {
-    const listing = await Listing.findById(req.params.id).populate('seller', 'name email');
+    const listing = await Listing.findById(req.params.id).populate('seller', 'name _id');
     if (!listing) return res.status(404).json({ success: false, message: 'Listing not found' });
     res.json({ success: true, data: listing });
   } catch (error) {
