@@ -106,3 +106,70 @@ Online-book-sharing-system/
 ├── render.yaml
 ├── .gitignore
 └── README.md
+1. Clone the repository
+git clone https://github.com/NeerajSaini2004/Online-book-sharing-system-.git
+
+2. Navigate into the project
+cd Online-book-sharing-system-
+
+3. Install dependencies
+Install the dependencies for the frontend and backend according to their respective package.json files.
+4. Configure environment variables
+Create the required .env files and add your environment-specific configuration.
+Example:
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+RAZORPAY_KEY_ID=your_razorpay_key
+RAZORPAY_KEY_SECRET=your_razorpay_secret
+
+Never commit real API keys, passwords, database credentials, or secret environment variables to GitHub.
+
+5. Start the application
+Start the backend and frontend using the scripts defined in their respective package.json files.
+🔄 Application Flow
+User
+  ↓
+Authentication
+  ↓
+Browse Books & Study Materials
+  ↓
+Select Product
+  ↓
+Place Order
+  ↓
+Payment
+  ↓
+Order Processing
+  ↓
+Delivery / Order Tracking
+
+📸 Screenshots
+Add screenshots of the application here.
+🏠 Home Page
+<!-- Add screenshot here -->
+
+📚 Books / Marketplace
+<!-- Add screenshot here -->
+
+🔐 Authentication
+<!-- Add screenshot here -->
+
+👨‍💼 Admin Dashboard
+<!-- Add screenshot here -->
+
+📌 Future Improvements
+- ⭐ Product reviews and ratings
+- 💬 Real-time buyer/seller communication
+- ❤️ Wishlist functionality
+- 🔔 Improved real-time notifications
+- 📱 Further mobile optimization
+- 📊 Advanced analytics dashboard
+👨‍💻 Developer
+Neeraj Saini
+Full-Stack Developer focused on building practical web applications using modern JavaScript technologies.
+Connect
+- GitHub: https://github.com/NeerajSaini2004
+- LinkedIn: Add your LinkedIn profile here
+- Portfolio: Add your portfolio URL here
+⭐ If you find this project useful
+Consider giving the repository a ⭐ star!
