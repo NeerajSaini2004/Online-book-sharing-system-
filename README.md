@@ -146,16 +146,16 @@ Delivery / Order Tracking
 📸 Screenshots
 Add screenshots of the application here.
 🏠 Home Page
-<!-- Add screenshot here -->
+<img width="901" height="434" alt="image" src="https://github.com/user-attachments/assets/521ee0e5-c45c-4801-8ac6-f5441ad81d2c" />
+
 
 📚 Books / Marketplace
-<!-- Add screenshot here -->
+<img width="804" height="432" alt="image" src="https://github.com/user-attachments/assets/982b61d1-4f9f-4982-80a9-1b48f9f196b1" />
+
 
 🔐 Authentication
-<!-- Add screenshot here -->
+<img width="298" height="359" alt="image" src="https://github.com/user-attachments/assets/c9d3cc8c-1de2-455f-9698-c8c3dd92e1fe" />
 
-👨‍💼 Admin Dashboard
-<!-- Add screenshot here -->
 
 📌 Future Improvements
 - ⭐ Product reviews and ratings
@@ -169,7 +169,7 @@ Neeraj Saini
 Full-Stack Developer focused on building practical web applications using modern JavaScript technologies.
 Connect
 - GitHub: https://github.com/NeerajSaini2004
-- LinkedIn: Add your LinkedIn profile here
-- Portfolio: Add your portfolio URL here
+- LinkedIn: https://www.linkedin.com/in/neerajsaini19/
+- Portfolio:https://neerajsaini2004.github.io/Portfolio/
 ⭐ If you find this project useful
 Consider giving the repository a ⭐ star!
